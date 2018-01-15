@@ -1,7 +1,9 @@
 #include "libraries/cetcd/cetcd.h"
+#include "libraries/cetcd/cetcd_array.h"
 
 void init_etcd_connection(cetcd_array* resp) {
     cetcd_array addrs;
+
     cetcd_array_init(&addrs, 3);
     cetcd_array_append(&addrs, "http://etcd0:2379");
 }
