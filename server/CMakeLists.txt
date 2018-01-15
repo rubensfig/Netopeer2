@@ -135,6 +135,8 @@ endif()
 target_link_libraries(netopeer2-server ${LIBNETCONF2_LIBRARIES})
 include_directories(${LIBNETCONF2_INCLUDE_DIRS})
 
+FIND_LIBRARY(CETCD_LIBRARY cetcd /opt/dev/Netopeer2/server/libraries/cetcd)
+TARGET_LINK_LIBRARIES(netopeer2-server ${CETCD_LIBRARY})
 # dependencies - libssl
 #if(LIBNETCONF2_ENABLED_TLS)
 #    find_package(OpenSSL REQUIRED)
