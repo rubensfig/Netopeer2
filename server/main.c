@@ -41,6 +41,8 @@
 #include "operations.h"
 #include "netconf_monitoring.h"
 
+#include "cetcd-connector.c"
+
 #include "../modules/ietf-netconf@2011-06-01.h"
 #include "../modules/ietf-netconf-monitoring.h"
 #include "../modules/ietf-netconf-with-defaults@2011-06-01.h"
@@ -1081,6 +1083,8 @@ worker_thread(void *arg)
 
         /* listen for incoming requests on active NETCONF sessions */
         rc = nc_ps_poll(np2srv.nc_ps, 0, &ncs);
+        if (rc == NC_PSPOLL_RPC)
+            etcd_data_parse(rc);
 
         if (rc & (NC_PSPOLL_NOSESSIONS | NC_PSPOLL_TIMEOUT)) {
             /* if there is no active session or timeout, rest for a while */
