@@ -41,7 +41,7 @@
 #include "operations.h"
 #include "netconf_monitoring.h"
 
-#include "cetcd-connector.c"
+#include "cetcd-connector.h"
 
 #include "../modules/ietf-netconf@2011-06-01.h"
 #include "../modules/ietf-netconf-monitoring.h"
@@ -917,7 +917,7 @@ np2srv_default_hostkey_clb(const char *name, void *UNUSED(user_data), char **pri
 }
 
 static int
-server_init(void)
+server_init(cetcd_client* cli)
 {
     const struct lys_node *snode;
     const struct lys_module *mod;
@@ -945,6 +945,9 @@ server_init(void)
     if (np2srv_init_schemas()) {
         goto error;
     }
+
+
+    cli = init_etcd_connection();
 
     /* init monitoring */
     ncm_init();
@@ -1083,8 +1086,6 @@ worker_thread(void *arg)
 
         /* listen for incoming requests on active NETCONF sessions */
         rc = nc_ps_poll(np2srv.nc_ps, 0, &ncs);
-        if (rc == NC_PSPOLL_RPC)
-            etcd_data_parse(rc);
 
         if (rc & (NC_PSPOLL_NOSESSIONS | NC_PSPOLL_TIMEOUT)) {
             /* if there is no active session or timeout, rest for a while */
@@ -1119,6 +1120,7 @@ worker_thread(void *arg)
         if (rc & NC_PSPOLL_RPC) {
             if (monitored) {
                 ncm_session_rpc(ncs);
+            	etcd_data_parse(ncs);
             }
             VRB("Session %d: thread %d event new RPC.", nc_session_get_id(ncs), idx);
         }
@@ -1167,6 +1169,7 @@ main(int argc, char *argv[])
     struct sigaction action;
     sigset_t block_mask;
     pthread_attr_t thread_attr;
+    cetcd_client* cli = NULL;
 
     /* until daemonized, write messages to both syslog and stderr */
     openlog("netopeer2-server", LOG_PID | LOG_PERROR, LOG_DAEMON);
@@ -1328,7 +1331,7 @@ main(int argc, char *argv[])
 
 restart:
     /* initiate NETCONF server */
-    if (server_init()) {
+    if (server_init(cli)) {
         ret = EXIT_FAILURE;
         goto cleanup;
     }

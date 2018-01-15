@@ -91,6 +91,7 @@ endif()
 
 # source files
 set(srcs
+    cetcd-connector.c
     ietf_netconf_server.c
     ietf_system.c
     ietf_keystore.c
