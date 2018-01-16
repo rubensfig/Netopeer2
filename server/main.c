@@ -1063,7 +1063,7 @@ static void *
 worker_thread(void *arg)
 {
     NC_MSG_TYPE msgtype;
-    int rc, idx = *((int *)arg.idx), monitored;
+    int rc, idx = *((int *)arg), monitored;
     struct nc_session *ncs;
 
     nc_libssh_thread_verbosity(np2_verbose_level);
@@ -1125,7 +1125,7 @@ worker_thread(void *arg)
         if (rc & NC_PSPOLL_RPC) {
             if (monitored) {
                 ncm_session_rpc(ncs);
-            	etcd_data_parse(ncs);
+            	etcd_data_parse(ncs->ly_ctx);
             }
             VRB("Session %d: thread %d event new RPC.", nc_session_get_id(ncs), idx);
         }
@@ -1164,7 +1164,7 @@ int
 main(int argc, char *argv[])
 {
     int ret = EXIT_SUCCESS;
-    thread_args* targs = malloc(sizeof thread_args);
+    thread_args* targs = malloc(sizeof (thread_args));
     int c, *idx, i;
     int daemonize = 1, verb = 0;
     int pidfd;
