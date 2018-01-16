@@ -54,6 +54,11 @@ struct np2srv np2srv;
 struct np2srv_dslock dslock;
 pthread_rwlock_t dslock_rwl = PTHREAD_RWLOCK_INITIALIZER;
 
+typedef struct {
+    int *idx;
+    cetcd_client* cli;
+} thread_args;
+
 /**
  * @brief Control flags for the main loop
  */
@@ -1058,7 +1063,7 @@ static void *
 worker_thread(void *arg)
 {
     NC_MSG_TYPE msgtype;
-    int rc, idx = *((int *)arg), monitored;
+    int rc, idx = *((int *)arg.idx), monitored;
     struct nc_session *ncs;
 
     nc_libssh_thread_verbosity(np2_verbose_level);
@@ -1159,6 +1164,7 @@ int
 main(int argc, char *argv[])
 {
     int ret = EXIT_SUCCESS;
+    thread_args* targs = malloc(sizeof thread_args);
     int c, *idx, i;
     int daemonize = 1, verb = 0;
     int pidfd;
@@ -1331,7 +1337,7 @@ main(int argc, char *argv[])
 
 restart:
     /* initiate NETCONF server */
-    if (server_init(cli)) {
+    if (server_init(targs->cli)) {
         ret = EXIT_FAILURE;
         goto cleanup;
     }
@@ -1340,9 +1346,8 @@ restart:
     pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
     /* start additional worker threads */
     for (i = 1; i < NP2SRV_THREAD_COUNT; ++i) {
-        idx = malloc(sizeof *idx);
-        *idx = i;
-        pthread_create(&np2srv.workers[*idx], &thread_attr, worker_thread, idx);
+        targs->idx = i;
+        pthread_create(&np2srv.workers[*idx], &thread_attr, worker_thread, (void*)targs);
     }
     pthread_attr_destroy(&thread_attr);
 
