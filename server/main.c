@@ -1125,7 +1125,7 @@ worker_thread(void *arg)
         if (rc & NC_PSPOLL_RPC) {
             if (monitored) {
                 ncm_session_rpc(ncs);
-            	etcd_data_parse(ncs->ly_ctx);
+            	etcd_data_parse(ncs);
             }
             VRB("Session %d: thread %d event new RPC.", nc_session_get_id(ncs), idx);
         }
